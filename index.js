@@ -1,15 +1,35 @@
-const express = require('express');
+const express = require('express')
 const bodyParser = require('body-parser');
-const app = express(); // 익스프레스 인스턴스 생성
+const {sequelize} = require('./database');
+const globalStatController = require('./controller/global-stat.controller');
 
-app.use(bodyParser.json());
-app.get('/', (req, res) => {
-  res.json({message: 'Hello CoronaBoard!'})
-})
+async function launchServer() {
 
-const port = process.env.PORT || 8080;
+  const app = express(); // 익스프레스 인스턴스 생성
 
-app.listen(port, () => {
-  console.log(`Server is running on prot ${port}`)
-})
+  app.use(bodyParser.json());
+  app.get('/', (req, res) => {
+    res.json({message: 'Hello CoronaBoard!'})
+  })
+  app.get('/global-stats', globalStatController.getAll);
+  app.post('/global-stats', globalStatController.insertOrUpdate);
+  app.delete('/global-stats', globalStatController.remove);
 
+
+  try {
+    await sequelize.sync();
+    console.log('Database is ready!')
+  } catch (error) {
+    console.log('Unable to connect to the database:');
+    console.log(error);
+    process.exit(1);
+  }
+
+  const port = process.env.PORT || 8080;
+
+  app.listen(port, () => {
+    console.log(`Server is running on prot ${port}`)
+  })
+}
+
+launchServer()
